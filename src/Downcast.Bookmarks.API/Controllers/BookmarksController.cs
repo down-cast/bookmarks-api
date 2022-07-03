@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Downcast.Bookmarks.API.Controllers;
@@ -11,5 +12,15 @@ public class BookmarksController : ControllerBase
     public BookmarksController(ILogger<BookmarksController> logger)
     {
         _logger = logger;
+    }
+
+    [HttpGet]
+    [Authorize]
+    public Task<IEnumerable<string>> GetUserBookmarks()
+    {
+        return Task.FromResult<IEnumerable<string>>(new List<string>
+        {
+            "example"
+        });
     }
 }

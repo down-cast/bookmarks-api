@@ -5,6 +5,11 @@
         "Message": "Invalid Jwt",
         "Detail": "The jwt might be expired or with a wrong format",
         "StatusCode": "Unauthorized"
+      },
+      "ClaimNotFound": {
+        "Message": "A certain claim was found",
+        "Detail": "This might mean an internal error or a token with a bad format",
+        "StatusCode": "NotFound"
       }
     }
   }
