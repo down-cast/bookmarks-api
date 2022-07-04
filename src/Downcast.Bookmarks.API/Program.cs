@@ -1,5 +1,5 @@
 using Downcast.Bookmarks.API.Config;
-using Downcast.Common.Error.Handler.Config;
+using Downcast.Common.Errors.Handler.Config;
 using Downcast.Common.Logging;
 using Downcast.SessionManager.SDK.Authentication.Handler;
 
@@ -37,13 +37,13 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDowncastAuthentication(builder.Configuration);
 
 builder.AddBookmarksApiServices();
-builder.ConfigureSerilog();
-builder.ConfigureErrorHandlerOptions();
+builder.AddSerilog();
+builder.AddErrorHandlerOptions();
 
 WebApplication app = builder.Build();
 
 app.UseSerilogRequestLogging();
-app.ConfigureErrorHandler();
+app.UseErrorHandler();
 
 app.UseSwagger();
 app.UseSwaggerUI();
