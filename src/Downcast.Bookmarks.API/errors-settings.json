@@ -10,6 +10,11 @@
         "Message": "A certain claim was found",
         "Detail": "This might mean an internal error or a token with a bad format",
         "StatusCode": "NotFound"
+      },
+      "EntityNotFound": {
+        "Message": "The requested entity was not found",
+        "Detail": "Make sure the id is valid",
+        "StatusCode": "NotFound"
       }
     }
   }

@@ -13,6 +13,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution 
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Downcast.Bookmarks.Repository", "src\Downcast.Bookmarks.Repository\Downcast.Bookmarks.Repository.csproj", "{7C60C2CF-95C2-43E1-8E8A-1896A20EC63A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Downcast.Bookmarks.Manager", "src\Downcast.Bookmarks.Manager\Downcast.Bookmarks.Manager.csproj", "{9C517054-F7B5-4377-9890-C181D40400FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Downcast.Bookmarks.Model", "src\Downcast.Bookmarks.Model\Downcast.Bookmarks.Model.csproj", "{1508369C-8491-4559-B1AF-70A8CD5A6C22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,8 +29,23 @@ Global
 		{AB27795F-C37F-48FF-8899-99F4C0950156}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB27795F-C37F-48FF-8899-99F4C0950156}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB27795F-C37F-48FF-8899-99F4C0950156}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C60C2CF-95C2-43E1-8E8A-1896A20EC63A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C60C2CF-95C2-43E1-8E8A-1896A20EC63A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C60C2CF-95C2-43E1-8E8A-1896A20EC63A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C60C2CF-95C2-43E1-8E8A-1896A20EC63A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C517054-F7B5-4377-9890-C181D40400FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C517054-F7B5-4377-9890-C181D40400FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C517054-F7B5-4377-9890-C181D40400FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C517054-F7B5-4377-9890-C181D40400FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1508369C-8491-4559-B1AF-70A8CD5A6C22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1508369C-8491-4559-B1AF-70A8CD5A6C22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1508369C-8491-4559-B1AF-70A8CD5A6C22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1508369C-8491-4559-B1AF-70A8CD5A6C22}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{AB27795F-C37F-48FF-8899-99F4C0950156} = {329E7436-AE3D-423D-AE42-AD986CD62D87}
+		{7C60C2CF-95C2-43E1-8E8A-1896A20EC63A} = {329E7436-AE3D-423D-AE42-AD986CD62D87}
+		{9C517054-F7B5-4377-9890-C181D40400FF} = {329E7436-AE3D-423D-AE42-AD986CD62D87}
+		{1508369C-8491-4559-B1AF-70A8CD5A6C22} = {329E7436-AE3D-423D-AE42-AD986CD62D87}
 	EndGlobalSection
 EndGlobal

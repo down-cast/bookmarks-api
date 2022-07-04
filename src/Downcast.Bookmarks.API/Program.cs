@@ -12,7 +12,7 @@ builder.Configuration.AddJsonFile("http-clients-settings.json");
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme
