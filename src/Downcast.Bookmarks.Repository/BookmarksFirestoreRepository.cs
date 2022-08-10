@@ -3,6 +3,8 @@ using Downcast.Bookmarks.Repository.Domain;
 using Downcast.Bookmarks.Repository.Options;
 using Downcast.Common.Errors;
 
+using Firestore.Typed.Client;
+
 using Google.Cloud.Firestore;
 
 using Microsoft.Extensions.Logging;
@@ -12,7 +14,7 @@ namespace Downcast.Bookmarks.Repository;
 
 public class BookmarksFirestoreRepository : IBookmarksRepository
 {
-    private readonly CollectionReference _collection;
+    private readonly TypedCollectionReference<Bookmark> _collection;
     private readonly ILogger<BookmarksFirestoreRepository> _logger;
 
     public BookmarksFirestoreRepository(
@@ -21,12 +23,12 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
         ILogger<BookmarksFirestoreRepository> logger)
     {
         _logger     = logger;
-        _collection = firestoreDb.Collection(options.Value.Collection);
+        _collection = firestoreDb.TypedCollection<Bookmark>(options.Value.Collection);
     }
 
     public async Task<string> Create(string userId, string articleId)
     {
-        DocumentReference document = await _collection.AddAsync(new CreateBookmark
+        TypedDocumentReference<Bookmark> document = await _collection.AddAsync(new Bookmark
         {
             UserId    = userId,
             ArticleId = articleId
@@ -37,15 +39,11 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
 
     public async Task<BookmarkDto> GetByUserIdAndArticleId(string userId, string articleId)
     {
-        QuerySnapshot snapshot = await _collection
-            .WhereEqualTo(nameof(Bookmark.ArticleId), articleId)
-            .WhereEqualTo(nameof(Bookmark.UserId), userId)
-            .Limit(1)
-            .GetSnapshotAsync()
-            .ConfigureAwait(false);
-        if (snapshot.Any())
+        TypedQuerySnapshot<Bookmark> snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
+
+        if (snapshots.Any())
         {
-            return CreateBookmarkDto(snapshot[0].ConvertTo<Bookmark>());
+            return CreateBookmarkDto(snapshots[0].RequiredObject);
         }
 
         _logger.LogDebug("Bookmark with {ArticleId} and {UserId} was not found", articleId, userId);
@@ -54,32 +52,57 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
 
     public async Task Delete(string userId, string articleId)
     {
-        QuerySnapshot snapshotAsync = await _collection
-            .WhereEqualTo(nameof(Bookmark.UserId), userId)
-            .WhereEqualTo(nameof(Bookmark.ArticleId), articleId)
-            .Limit(1)
-            .GetSnapshotAsync()
+        TypedQuerySnapshot<Bookmark> snapshotAsync = await GetBookmarkByUserIdAndArticleId(userId, articleId)
             .ConfigureAwait(false);
 
-        if (snapshotAsync.Any())
+        foreach (TypedDocumentSnapshot<Bookmark> snapshot in snapshotAsync)
         {
-            await snapshotAsync[0].Reference.DeleteAsync().ConfigureAwait(false);
+            await snapshot.Reference.DeleteAsync().ConfigureAwait(false);
             _logger.LogDebug("Delete bookmark with {BookmarkId}", articleId);
         }
     }
 
+    public Task DeleteById(string id)
+    {
+        return _collection.Document(id).DeleteAsync();
+    }
+
+    public async Task<BookmarkDto> GetById(string id)
+    {
+        TypedDocumentSnapshot<Bookmark> snapshot = await _collection
+            .Document(id)
+            .GetSnapshotAsync()
+            .ConfigureAwait(false);
+
+        if (snapshot.Exists)
+        {
+            return CreateBookmarkDto(snapshot.RequiredObject);
+        }
+
+        throw new DcException(ErrorCodes.EntityNotFound, "Could not find bookmark");
+    }
+
+    private Task<TypedQuerySnapshot<Bookmark>> GetBookmarkByUserIdAndArticleId(string userId, string articleId)
+    {
+        return _collection
+            .WhereEqualTo(b => b.UserId, userId)
+            .WhereEqualTo(b => b.ArticleId, articleId)
+            .Limit(1)
+            .GetSnapshotAsync();
+    }
+
     public async Task<IEnumerable<BookmarkDto>> GetAllByUserId(string userId)
     {
-        QuerySnapshot snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
+        TypedQuerySnapshot<Bookmark> snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
         return snapshots
-            .Select(snap => snap.ConvertTo<Bookmark>())
+            .Select(snap => snap.RequiredObject)
             .Select(CreateBookmarkDto)
             .ToList();
     }
 
     private static BookmarkDto CreateBookmarkDto(Bookmark bookmark)
     {
-        return new BookmarkDto
+        return new BookmarkDto()
         {
             Id        = bookmark.Id,
             Created   = bookmark.Created,
@@ -90,8 +113,8 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
 
     public async Task DeleteAllByUserId(string userId)
     {
-        QuerySnapshot snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
-        foreach (DocumentSnapshot snap in snapshots)
+        TypedQuerySnapshot<Bookmark> snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
+        foreach (TypedDocumentSnapshot<Bookmark> snap in snapshots)
         {
             await snap.Reference.DeleteAsync().ConfigureAwait(false);
         }
@@ -99,10 +122,10 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
         _logger.LogDebug("Deleted {NrOfBookmarks} from {UserId}", snapshots.Count, userId);
     }
 
-    private Task<QuerySnapshot> GetAllByUserIdInternal(string userId)
+    private Task<TypedQuerySnapshot<Bookmark>> GetAllByUserIdInternal(string userId)
     {
         return _collection
-            .WhereEqualTo(nameof(Bookmark.UserId), userId)
+            .WhereEqualTo(bookmark => bookmark.UserId, userId)
             .GetSnapshotAsync();
     }
 }

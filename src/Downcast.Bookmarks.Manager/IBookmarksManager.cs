@@ -9,4 +9,6 @@ public interface IBookmarksManager
     Task<IEnumerable<BookmarkDto>> GetAll();
     Task Delete(string articleId);
     Task DeleteAllByUserId(string userId);
+    Task<BookmarkDto> GetById(string id);
+    Task DeleteById(string id);
 }

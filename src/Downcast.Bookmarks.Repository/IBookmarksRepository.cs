@@ -13,4 +13,6 @@ public interface IBookmarksRepository
     Task DeleteAllByUserId(string userId);
 
     Task<BookmarkDto> GetByUserIdAndArticleId(string userId, string articleId);
+    Task DeleteById(string id);
+    Task<BookmarkDto> GetById(string id);
 }
