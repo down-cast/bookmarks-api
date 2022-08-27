@@ -52,13 +52,13 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
 
     public async Task Delete(string userId, string articleId)
     {
-        TypedQuerySnapshot<Bookmark> snapshotAsync = await GetBookmarkByUserIdAndArticleId(userId, articleId)
+        TypedQuerySnapshot<Bookmark> snapshot = await GetBookmarkByUserIdAndArticleId(userId, articleId)
             .ConfigureAwait(false);
 
-        foreach (TypedDocumentSnapshot<Bookmark> snapshot in snapshotAsync)
+        foreach (TypedDocumentSnapshot<Bookmark> documentSnapshot in snapshot)
         {
-            await snapshot.Reference.DeleteAsync().ConfigureAwait(false);
-            _logger.LogDebug("Delete bookmark with {BookmarkId}", articleId);
+            await documentSnapshot.Reference.DeleteAsync().ConfigureAwait(false);
+            _logger.LogDebug("Deleted bookmark with {ArticleId} and {Id}", articleId, documentSnapshot.Id);
         }
     }
 

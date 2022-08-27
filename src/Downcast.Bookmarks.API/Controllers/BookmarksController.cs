@@ -2,8 +2,6 @@ using Downcast.Bookmarks.Manager;
 using Downcast.Bookmarks.Model;
 using Downcast.SessionManager.SDK.Authentication.Extensions;
 
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,7 +18,6 @@ public class BookmarksController : ControllerBase
     {
         _manager = manager;
     }
-
 
     [HttpGet]
     public Task<IEnumerable<BookmarkDto>> GetUserBookmarks()
@@ -58,7 +55,6 @@ public class BookmarksController : ControllerBase
     [HttpPost]
     public async Task<ActionResult> CreateBookmark(BookmarkInputDto bookmark)
     {
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, User).ConfigureAwait(false);
         string _ = await _manager.Create(bookmark).ConfigureAwait(false);
         return CreatedAtAction(nameof(GetByArticleId), new { bookmark.ArticleId }, null);
     }

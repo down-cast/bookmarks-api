@@ -8,9 +8,9 @@
 
     <ItemGroup>
         <PackageReference Include="Downcast.Common.Errors.Handler" Version="0.0.7" />
-        <PackageReference Include="Downcast.Common.Logging" Version="0.0.6" />
+        <PackageReference Include="Downcast.Common.Logging" Version="0.0.7" />
         <PackageReference Include="Downcast.SessionManager.SDK.Authentication.Extensions" Version="0.0.3" />
-        <PackageReference Include="Downcast.SessionManager.SDK.Authentication.Handler" Version="0.0.2" />
+        <PackageReference Include="Downcast.SessionManager.SDK.Authentication.Handler" Version="0.0.3" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     </ItemGroup>
 
