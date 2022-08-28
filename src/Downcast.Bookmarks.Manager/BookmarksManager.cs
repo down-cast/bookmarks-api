@@ -19,29 +19,29 @@ public class BookmarksManager : IBookmarksManager
         IBookmarksRepository repository,
         ILogger<BookmarksManager> logger)
     {
-        _context    = context;
+        _context = context;
         _repository = repository;
-        _logger     = logger;
+        _logger = logger;
     }
 
     public Task<BookmarkDto> GetByArticleId(string articleId)
     {
-        return _repository.GetByUserIdAndArticleId(_context.HttpContext.User.GetRequiredUserId(), articleId);
+        return _repository.GetByUserIdAndArticleId(_context.HttpContext.User.UserId(), articleId);
     }
 
     public Task<string> Create(BookmarkInputDto bookmark)
     {
-        return _repository.Create(_context.HttpContext.User.GetRequiredUserId(), bookmark.ArticleId);
+        return _repository.Create(_context.HttpContext.User.UserId(), bookmark.ArticleId);
     }
 
     public Task<IEnumerable<BookmarkDto>> GetAll()
     {
-        return _repository.GetAllByUserId(_context.HttpContext.User.GetRequiredUserId());
+        return _repository.GetAllByUserId(_context.HttpContext.User.UserId());
     }
 
     public Task Delete(string articleId)
     {
-        return _repository.Delete(_context.HttpContext.User.GetRequiredUserId(), articleId);
+        return _repository.Delete(_context.HttpContext.User.UserId(), articleId);
     }
 
     public Task DeleteAllByUserId(string userId)
@@ -52,7 +52,7 @@ public class BookmarksManager : IBookmarksManager
     public async Task<BookmarkDto> GetById(string id)
     {
         BookmarkDto bookmark = await _repository.GetById(id).ConfigureAwait(false);
-        string userId = _context.HttpContext.User.GetRequiredUserId();
+        string userId = _context.HttpContext.User.UserId();
         if (bookmark.UserId.Equals(userId, StringComparison.Ordinal))
         {
             return bookmark;
@@ -65,7 +65,7 @@ public class BookmarksManager : IBookmarksManager
     public async Task DeleteById(string id)
     {
         BookmarkDto bookmark = await _repository.GetById(id).ConfigureAwait(false);
-        string userId = _context.HttpContext.User.GetRequiredUserId();
+        string userId = _context.HttpContext.User.UserId();
         if (!bookmark.UserId.Equals(userId, StringComparison.Ordinal))
         {
             _logger.LogWarning("{BookmarkUserId} is different from the {UserId} in claims", bookmark.UserId, userId);
