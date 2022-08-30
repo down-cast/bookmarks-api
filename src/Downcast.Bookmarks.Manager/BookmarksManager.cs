@@ -1,24 +1,19 @@
 ﻿using Downcast.Bookmarks.Model;
 using Downcast.Bookmarks.Repository;
-using Downcast.SessionManager.SDK.Authentication.Extensions;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Downcast.Bookmarks.Manager;
 
 public class BookmarksManager : IBookmarksManager
 {
-    private readonly IHttpContextAccessor _context;
     private readonly IBookmarksRepository _repository;
     private readonly ILogger<BookmarksManager> _logger;
 
     public BookmarksManager(
-        IHttpContextAccessor context,
         IBookmarksRepository repository,
         ILogger<BookmarksManager> logger)
     {
-        _context = context;
         _repository = repository;
         _logger = logger;
     }
@@ -35,7 +30,7 @@ public class BookmarksManager : IBookmarksManager
 
     public IAsyncEnumerable<BookmarkDto> GetBookmarks(string userId, BookmarksFilter filter)
     {
-        return _repository.GetBookmarksByUserId(userId, filter);
+        return _repository.GetBookmarks(userId, filter);
     }
 
     public Task Delete(string userId, string articleId)
@@ -43,18 +38,8 @@ public class BookmarksManager : IBookmarksManager
         return _repository.Delete(userId, articleId);
     }
 
-    public Task DeleteAllByUserId(string userId)
+    public Task DeleteAll(string userId)
     {
-        return _repository.DeleteAllByUserId(userId);
-    }
-
-    public Task<BookmarkDto> GetById(string userId, string bookmarkId)
-    {
-        return _repository.GetById(userId, bookmarkId);
-    }
-
-    public Task DeleteById(string userId, string bookmarkId)
-    {
-        return _repository.DeleteById(_context.HttpContext.User.UserId(), bookmarkId);
+        return _repository.DeleteAll(userId);
     }
 }

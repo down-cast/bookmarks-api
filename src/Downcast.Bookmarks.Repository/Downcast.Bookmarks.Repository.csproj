@@ -8,7 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="Downcast.Common.Errors" Version="0.0.13" />
-      <PackageReference Include="Firestore.Typed.Client" Version="1.0.2" />
+      <PackageReference Include="Firestore.Typed.Client" Version="1.0.3" />
       <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
     </ItemGroup>
 

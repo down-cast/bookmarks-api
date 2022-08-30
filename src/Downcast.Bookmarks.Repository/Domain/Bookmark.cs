@@ -6,13 +6,7 @@ namespace Downcast.Bookmarks.Repository.Domain;
 internal class Bookmark
 {
     [FirestoreDocumentId]
-    public string Id { get; set; } = null!;
-
-    [FirestoreProperty]
     public string ArticleId { get; init; } = null!;
-
-    [FirestoreProperty]
-    public string UserId { get; init; } = null!;
 
     [FirestoreDocumentCreateTimestamp]
     public DateTime Created { get; set; }

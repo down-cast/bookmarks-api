@@ -35,32 +35,7 @@ public class BookmarksController : ControllerBase
     {
         return _manager.GetBookmarks(UserId, filter);
     }
-
-
-    /// <summary>
-    /// Returns a bookmark by id
-    /// </summary>
-    /// <param name="bookmarkId"></param>
-    /// <returns></returns>
-    [HttpGet("{bookmarkId}")]
-    public Task<BookmarkDto> GetById(string bookmarkId)
-    {
-        return _manager.GetById(UserId, bookmarkId);
-    }
-
-
-    /// <summary>
-    /// Deletes a bookmarks by id
-    /// </summary>
-    /// <param name="bookmarkId"></param>
-    /// <returns></returns>
-    [HttpDelete("{bookmarkId}")]
-    public Task DeleteById(string bookmarkId)
-    {
-        return _manager.DeleteById(UserId, bookmarkId);
-    }
-
-
+    
     /// <summary>
     /// Returns a bookmark by article id
     /// </summary>
@@ -107,6 +82,6 @@ public class BookmarksController : ControllerBase
     [Authorize(Roles = RoleNames.Admin)]
     public Task DeleteBookmarks(string userId)
     {
-        return _manager.DeleteAllByUserId(userId);
+        return _manager.DeleteAll(userId);
     }
 }

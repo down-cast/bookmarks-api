@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-using Downcast.Bookmarks.Model;
+﻿using Downcast.Bookmarks.Model;
 using Downcast.Bookmarks.Repository.Domain;
 using Downcast.Bookmarks.Repository.Options;
 using Downcast.Common.Errors;
@@ -33,85 +31,128 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
     }
 
     /// <summary>
-    /// returns the sub-collection of bookmarks for the given user
+    /// Returns the sub-collection of bookmarks for the given user, ensuring that the user exists
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <exception cref="DcException">Throws if user does not exist</exception>
+    /// <returns></returns>
+    private async Task<TypedCollectionReference<Bookmark>> GetCollectionSafe(string userId)
+    {
+        DocumentSnapshot snapshot = await _firestoreDb
+            .Collection(_options.Value.UsersCollectionName)
+            .Document(userId)
+            .GetSnapshotAsync()
+            .ConfigureAwait(false);
+
+        if (snapshot.Exists)
+        {
+            return snapshot.Reference.TypedCollection<Bookmark>(_options.Value.BookmarksCollectionName);
+        }
+
+        _logger.LogWarning("User {UserId} does not exist", userId);
+        throw new DcException(ErrorCodes.EntityNotFound, "User not found");
+    }
+
+    /// <summary>
+    /// Returns a sub collection of bookmarks for the given userId
     /// </summary>
     /// <param name="userId"></param>
     /// <returns></returns>
-    private TypedCollectionReference<Bookmark> GetCollection(string userId) => _firestoreDb
-        .Collection(_options.Value.UsersCollectionName)
-        .Document(userId)
-        .TypedCollection<Bookmark>(_options.Value.BookmarksCollectionName);
-
-    public async Task<string> Create(string userId, string articleId)
+    private TypedCollectionReference<Bookmark> GetCollection(string userId)
     {
-        TypedDocumentReference<Bookmark> document = await GetCollection(userId).AddAsync(new Bookmark
-        {
-            UserId = userId,
-            ArticleId = articleId
-        }).ConfigureAwait(false);
-        _logger.LogDebug("Created bookmark with {BookmarkId}", document.Id);
-        return document.Id;
+        return _firestoreDb
+            .Collection(_options.Value.UsersCollectionName)
+            .Document(userId)
+            .TypedCollection<Bookmark>(_options.Value.BookmarksCollectionName);
     }
 
+
+    /// <summary>
+    /// Adds a new bookmark to the given user's bookmarks collection
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="articleId"></param>
+    /// <returns></returns>
+    public async Task<string> Create(string userId, string articleId)
+    {
+        _ = await GetCollectionSafe(userId).ConfigureAwait(false);
+
+        string bookmarkId = await _firestoreDb.RunTypedTransactionAsync<string, Bookmark>(async transaction =>
+        {
+            TypedDocumentSnapshot<Bookmark> docSnapshot = await transaction
+                .GetSnapshotAsync(GetBookmarkDocument(userId, articleId))
+                .ConfigureAwait(false);
+
+            if (docSnapshot.Exists)
+            {
+                return docSnapshot.Id;
+            }
+
+            transaction.Create(docSnapshot.Reference, new Bookmark
+            {
+                ArticleId = articleId
+            });
+
+            _logger.LogDebug("Created bookmark with {BookmarkId}", docSnapshot.Id);
+            return docSnapshot.Id;
+        }).ConfigureAwait(false);
+        return bookmarkId;
+    }
+
+
+    /// <summary>
+    /// Get a bookmark for the given userId and articleId
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="articleId"></param>
+    /// <returns></returns>
+    /// <exception cref="DcException"></exception>
     public async Task<BookmarkDto> GetByUserIdAndArticleId(string userId, string articleId)
     {
-        TypedQuerySnapshot<Bookmark> snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
-        if (snapshots.Any())
+        TypedDocumentSnapshot<Bookmark> bookmark = await GetBookmarkSnapshot(userId, articleId).ConfigureAwait(false);
+        if (bookmark.Exists)
         {
-            return CreateBookmarkDto(snapshots[0].RequiredObject);
+            return CreateBookmarkDto(bookmark.RequiredObject);
         }
 
         _logger.LogDebug("Bookmark with {ArticleId} and {UserId} was not found", articleId, userId);
         throw new DcException(ErrorCodes.EntityNotFound, "Could not find bookmark");
     }
 
+    private Task<TypedDocumentSnapshot<Bookmark>> GetBookmarkSnapshot(string userId, string articleId)
+    {
+        return GetBookmarkDocument(userId, articleId).GetSnapshotAsync();
+    }
+
+    private TypedDocumentReference<Bookmark> GetBookmarkDocument(string userId, string articleId)
+    {
+        return GetCollection(userId).Document(articleId);
+    }
+
+    /// <summary>
+    /// Delete a bookmark for the given userId and articleId
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="articleId"></param>
     public async Task Delete(string userId, string articleId)
     {
-        TypedQuerySnapshot<Bookmark> snapshot = await GetBookmarkByUserIdAndArticleId(userId, articleId)
-            .ConfigureAwait(false);
-
-        foreach (TypedDocumentSnapshot<Bookmark> documentSnapshot in snapshot)
-        {
-            await documentSnapshot.Reference.DeleteAsync().ConfigureAwait(false);
-            _logger.LogDebug("Deleted bookmark with {ArticleId} and {Id}", articleId, documentSnapshot.Id);
-        }
+        await GetBookmarkDocument(userId, articleId).DeleteAsync().ConfigureAwait(false);
+        _logger.LogDebug("Deleted bookmark for {UserId} and {ArticleId}", userId, articleId);
     }
 
-    public Task DeleteById(string userId, string bookmarkId)
-    {
-        return GetCollection(userId).Document(bookmarkId).DeleteAsync();
-    }
-
-    public async Task<BookmarkDto> GetById(string userId, string bookmarkId)
-    {
-        TypedDocumentSnapshot<Bookmark> snapshot = await GetCollection(userId)
-            .Document(bookmarkId)
-            .GetSnapshotAsync()
-            .ConfigureAwait(false);
-
-        if (snapshot.Exists)
-        {
-            return CreateBookmarkDto(snapshot.RequiredObject);
-        }
-
-        throw new DcException(ErrorCodes.EntityNotFound, "Could not find bookmark");
-    }
-
-    private Task<TypedQuerySnapshot<Bookmark>> GetBookmarkByUserIdAndArticleId(string userId, string articleId)
-    {
-        return GetCollection(userId)
-            .WhereEqualTo(b => b.ArticleId, articleId)
-            .Limit(1)
-            .GetSnapshotAsync();
-    }
-
-    public async IAsyncEnumerable<BookmarkDto> GetBookmarksByUserId(string userId, BookmarksFilter filter)
+    /// <summary>
+    /// Gets all bookmarks for the given userId
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="filter"></param>
+    /// <returns></returns>
+    public async IAsyncEnumerable<BookmarkDto> GetBookmarks(string userId, BookmarksFilter filter)
     {
         IAsyncEnumerable<TypedDocumentSnapshot<Bookmark>> bookmarksStream = GetCollection(userId)
             .Offset(filter.Skip)
             .Limit(filter.Top)
             .StreamAsync();
-        
+
         await foreach (TypedDocumentSnapshot<Bookmark> snapshot in bookmarksStream.ConfigureAwait(false))
         {
             yield return CreateBookmarkDto(snapshot.RequiredObject);
@@ -120,27 +161,25 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
 
     private static BookmarkDto CreateBookmarkDto(Bookmark bookmark)
     {
-        return new BookmarkDto()
+        return new BookmarkDto
         {
-            Id = bookmark.Id,
             Created = bookmark.Created,
             ArticleId = bookmark.ArticleId
         };
     }
 
-    public async Task DeleteAllByUserId(string userId)
+    /// <summary>
+    /// Deletes all bookmarks for the given userId
+    /// </summary>
+    /// <param name="userId"></param>
+    public async Task DeleteAll(string userId)
     {
-        TypedQuerySnapshot<Bookmark> snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
+        TypedQuerySnapshot<Bookmark> snapshots = await GetCollection(userId).GetSnapshotAsync().ConfigureAwait(false);
         foreach (TypedDocumentSnapshot<Bookmark> snap in snapshots)
         {
             await snap.Reference.DeleteAsync().ConfigureAwait(false);
         }
 
         _logger.LogDebug("Deleted {NrOfBookmarks} from {UserId}", snapshots.Count, userId);
-    }
-
-    private Task<TypedQuerySnapshot<Bookmark>> GetAllByUserIdInternal(string userId)
-    {
-        return GetCollection(userId).GetSnapshotAsync();
     }
 }
