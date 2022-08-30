@@ -6,7 +6,7 @@ public interface IBookmarksRepository
 {
     Task<string> Create(string userId, string articleId);
 
-    Task<IEnumerable<BookmarkDto>> GetAllByUserId(string userId);
+    IAsyncEnumerable<BookmarkDto> GetBookmarksByUserId(string userId, BookmarksFilter filter);
 
     Task Delete(string userId, string articleId);
 

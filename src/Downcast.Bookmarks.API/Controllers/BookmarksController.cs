@@ -24,18 +24,36 @@ public class BookmarksController : ControllerBase
     /// </summary>
     private string UserId => HttpContext.User.UserId();
 
+
+    /// <summary>
+    /// Returns user bookmarks as a stream of objects
+    /// </summary>
+    /// <param name="filter"></param>
+    /// <returns></returns>
     [HttpGet]
-    public Task<IEnumerable<BookmarkDto>> GetUserBookmarks()
+    public IAsyncEnumerable<BookmarkDto> GetUserBookmarks([FromQuery] BookmarksFilter filter)
     {
-        return _manager.GetAll(UserId);
+        return _manager.GetBookmarks(UserId, filter);
     }
 
+
+    /// <summary>
+    /// Returns a bookmark by id
+    /// </summary>
+    /// <param name="bookmarkId"></param>
+    /// <returns></returns>
     [HttpGet("{bookmarkId}")]
     public Task<BookmarkDto> GetById(string bookmarkId)
     {
         return _manager.GetById(UserId, bookmarkId);
     }
 
+
+    /// <summary>
+    /// Deletes a bookmarks by id
+    /// </summary>
+    /// <param name="bookmarkId"></param>
+    /// <returns></returns>
     [HttpDelete("{bookmarkId}")]
     public Task DeleteById(string bookmarkId)
     {
@@ -43,6 +61,11 @@ public class BookmarksController : ControllerBase
     }
 
 
+    /// <summary>
+    /// Returns a bookmark by article id
+    /// </summary>
+    /// <param name="articleId"></param>
+    /// <returns></returns>
     [HttpGet("article/{articleId}")]
     public Task<BookmarkDto> GetByArticleId(string articleId)
     {
@@ -50,6 +73,11 @@ public class BookmarksController : ControllerBase
     }
 
 
+    /// <summary>
+    /// Deletes bookmark by article id
+    /// </summary>
+    /// <param name="articleId"></param>
+    /// <returns></returns>
     [HttpDelete("article/{articleId}")]
     public Task DeleteBookmark(string articleId)
     {
@@ -57,6 +85,11 @@ public class BookmarksController : ControllerBase
     }
 
 
+    /// <summary>
+    /// Adds a new bookmark for a given article Id
+    /// </summary>
+    /// <param name="bookmark"></param>
+    /// <returns></returns>
     [HttpPost]
     public async Task<ActionResult> CreateBookmark(BookmarkInputDto bookmark)
     {
@@ -65,6 +98,11 @@ public class BookmarksController : ControllerBase
     }
 
 
+    /// <summary>
+    /// Deletes all user bookmarks
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
     [HttpDelete("user/{userId}")]
     [Authorize(Roles = RoleNames.Admin)]
     public Task DeleteBookmarks(string userId)

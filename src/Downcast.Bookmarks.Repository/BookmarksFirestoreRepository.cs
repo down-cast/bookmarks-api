@@ -1,4 +1,6 @@
-﻿using Downcast.Bookmarks.Model;
+﻿using System.Runtime.CompilerServices;
+
+using Downcast.Bookmarks.Model;
 using Downcast.Bookmarks.Repository.Domain;
 using Downcast.Bookmarks.Repository.Options;
 using Downcast.Common.Errors;
@@ -103,13 +105,17 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
             .GetSnapshotAsync();
     }
 
-    public async Task<IEnumerable<BookmarkDto>> GetAllByUserId(string userId)
+    public async IAsyncEnumerable<BookmarkDto> GetBookmarksByUserId(string userId, BookmarksFilter filter)
     {
-        TypedQuerySnapshot<Bookmark> snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
-        return snapshots
-            .Select(snap => snap.RequiredObject)
-            .Select(CreateBookmarkDto)
-            .ToList();
+        IAsyncEnumerable<TypedDocumentSnapshot<Bookmark>> bookmarksStream = GetCollection(userId)
+            .Offset(filter.Skip)
+            .Limit(filter.Top)
+            .StreamAsync();
+        
+        await foreach (TypedDocumentSnapshot<Bookmark> snapshot in bookmarksStream.ConfigureAwait(false))
+        {
+            yield return CreateBookmarkDto(snapshot.RequiredObject);
+        }
     }
 
     private static BookmarkDto CreateBookmarkDto(Bookmark bookmark)

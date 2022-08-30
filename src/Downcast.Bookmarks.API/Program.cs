@@ -13,26 +13,7 @@ builder.Configuration.AddJsonFile("http-clients-settings.json");
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme
-    {
-        Type         = SecuritySchemeType.Http,
-        Scheme       = "bearer",
-        BearerFormat = "JWT",
-        Description  = "JWT Authorization header using the Bearer scheme."
-    });
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "bearerAuth" }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
+builder.Services.AddSwaggerConfig();
 
 builder.Services.AddDowncastAuthentication(builder.Configuration);
 

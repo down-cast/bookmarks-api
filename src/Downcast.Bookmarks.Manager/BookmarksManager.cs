@@ -33,9 +33,9 @@ public class BookmarksManager : IBookmarksManager
         return _repository.Create(userId, bookmark.ArticleId);
     }
 
-    public Task<IEnumerable<BookmarkDto>> GetAll(string userId)
+    public IAsyncEnumerable<BookmarkDto> GetBookmarks(string userId, BookmarksFilter filter)
     {
-        return _repository.GetAllByUserId(userId);
+        return _repository.GetBookmarksByUserId(userId, filter);
     }
 
     public Task Delete(string userId, string articleId)
@@ -45,7 +45,7 @@ public class BookmarksManager : IBookmarksManager
 
     public Task DeleteAllByUserId(string userId)
     {
-        return _repository.GetAllByUserId(userId);
+        return _repository.DeleteAllByUserId(userId);
     }
 
     public Task<BookmarkDto> GetById(string userId, string bookmarkId)
