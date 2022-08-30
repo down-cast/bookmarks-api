@@ -4,6 +4,7 @@ using Downcast.Bookmarks.Repository.Options;
 using Downcast.Common.Errors;
 
 using Firestore.Typed.Client;
+using Firestore.Typed.Client.Extensions;
 
 using Google.Cloud.Firestore;
 
@@ -14,23 +15,36 @@ namespace Downcast.Bookmarks.Repository;
 
 public class BookmarksFirestoreRepository : IBookmarksRepository
 {
-    private readonly TypedCollectionReference<Bookmark> _collection;
+    private readonly FirestoreDb _firestoreDb;
+    private readonly IOptions<RepositoryOptions> _options;
     private readonly ILogger<BookmarksFirestoreRepository> _logger;
+
 
     public BookmarksFirestoreRepository(
         FirestoreDb firestoreDb,
         IOptions<RepositoryOptions> options,
         ILogger<BookmarksFirestoreRepository> logger)
     {
-        _logger     = logger;
-        _collection = firestoreDb.TypedCollection<Bookmark>(options.Value.Collection);
+        _firestoreDb = firestoreDb;
+        _options = options;
+        _logger = logger;
     }
+
+    /// <summary>
+    /// returns the sub-collection of bookmarks for the given user
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    private TypedCollectionReference<Bookmark> GetCollection(string userId) => _firestoreDb
+        .Collection(_options.Value.UsersCollectionName)
+        .Document(userId)
+        .TypedCollection<Bookmark>(_options.Value.BookmarksCollectionName);
 
     public async Task<string> Create(string userId, string articleId)
     {
-        TypedDocumentReference<Bookmark> document = await _collection.AddAsync(new Bookmark
+        TypedDocumentReference<Bookmark> document = await GetCollection(userId).AddAsync(new Bookmark
         {
-            UserId    = userId,
+            UserId = userId,
             ArticleId = articleId
         }).ConfigureAwait(false);
         _logger.LogDebug("Created bookmark with {BookmarkId}", document.Id);
@@ -40,7 +54,6 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
     public async Task<BookmarkDto> GetByUserIdAndArticleId(string userId, string articleId)
     {
         TypedQuerySnapshot<Bookmark> snapshots = await GetAllByUserIdInternal(userId).ConfigureAwait(false);
-
         if (snapshots.Any())
         {
             return CreateBookmarkDto(snapshots[0].RequiredObject);
@@ -62,15 +75,15 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
         }
     }
 
-    public Task DeleteById(string id)
+    public Task DeleteById(string userId, string bookmarkId)
     {
-        return _collection.Document(id).DeleteAsync();
+        return GetCollection(userId).Document(bookmarkId).DeleteAsync();
     }
 
-    public async Task<BookmarkDto> GetById(string id)
+    public async Task<BookmarkDto> GetById(string userId, string bookmarkId)
     {
-        TypedDocumentSnapshot<Bookmark> snapshot = await _collection
-            .Document(id)
+        TypedDocumentSnapshot<Bookmark> snapshot = await GetCollection(userId)
+            .Document(bookmarkId)
             .GetSnapshotAsync()
             .ConfigureAwait(false);
 
@@ -84,8 +97,7 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
 
     private Task<TypedQuerySnapshot<Bookmark>> GetBookmarkByUserIdAndArticleId(string userId, string articleId)
     {
-        return _collection
-            .WhereEqualTo(b => b.UserId, userId)
+        return GetCollection(userId)
             .WhereEqualTo(b => b.ArticleId, articleId)
             .Limit(1)
             .GetSnapshotAsync();
@@ -104,10 +116,9 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
     {
         return new BookmarkDto()
         {
-            Id        = bookmark.Id,
-            Created   = bookmark.Created,
-            ArticleId = bookmark.ArticleId,
-            UserId    = bookmark.UserId
+            Id = bookmark.Id,
+            Created = bookmark.Created,
+            ArticleId = bookmark.ArticleId
         };
     }
 
@@ -124,8 +135,6 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
 
     private Task<TypedQuerySnapshot<Bookmark>> GetAllByUserIdInternal(string userId)
     {
-        return _collection
-            .WhereEqualTo(bookmark => bookmark.UserId, userId)
-            .GetSnapshotAsync();
+        return GetCollection(userId).GetSnapshotAsync();
     }
 }

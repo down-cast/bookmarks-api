@@ -1,6 +1,5 @@
 ﻿using Downcast.Bookmarks.Model;
 using Downcast.Bookmarks.Repository;
-using Downcast.Common.Errors;
 using Downcast.SessionManager.SDK.Authentication.Extensions;
 
 using Microsoft.AspNetCore.Http;
@@ -24,24 +23,24 @@ public class BookmarksManager : IBookmarksManager
         _logger = logger;
     }
 
-    public Task<BookmarkDto> GetByArticleId(string articleId)
+    public Task<BookmarkDto> GetByArticleId(string userId, string articleId)
     {
-        return _repository.GetByUserIdAndArticleId(_context.HttpContext.User.UserId(), articleId);
+        return _repository.GetByUserIdAndArticleId(userId, articleId);
     }
 
-    public Task<string> Create(BookmarkInputDto bookmark)
+    public Task<string> Create(string userId, BookmarkInputDto bookmark)
     {
-        return _repository.Create(_context.HttpContext.User.UserId(), bookmark.ArticleId);
+        return _repository.Create(userId, bookmark.ArticleId);
     }
 
-    public Task<IEnumerable<BookmarkDto>> GetAll()
+    public Task<IEnumerable<BookmarkDto>> GetAll(string userId)
     {
-        return _repository.GetAllByUserId(_context.HttpContext.User.UserId());
+        return _repository.GetAllByUserId(userId);
     }
 
-    public Task Delete(string articleId)
+    public Task Delete(string userId, string articleId)
     {
-        return _repository.Delete(_context.HttpContext.User.UserId(), articleId);
+        return _repository.Delete(userId, articleId);
     }
 
     public Task DeleteAllByUserId(string userId)
@@ -49,27 +48,13 @@ public class BookmarksManager : IBookmarksManager
         return _repository.GetAllByUserId(userId);
     }
 
-    public async Task<BookmarkDto> GetById(string id)
+    public Task<BookmarkDto> GetById(string userId, string bookmarkId)
     {
-        BookmarkDto bookmark = await _repository.GetById(id).ConfigureAwait(false);
-        string userId = _context.HttpContext.User.UserId();
-        if (bookmark.UserId.Equals(userId, StringComparison.Ordinal))
-        {
-            return bookmark;
-        }
-
-        _logger.LogWarning("{BookmarkUserId} is different from the {UserId} in claims", bookmark.UserId, userId);
-        throw new DcException(ErrorCodes.EntityNotFound, $"Could not find bookmark with id: {id}");
+        return _repository.GetById(userId, bookmarkId);
     }
 
-    public async Task DeleteById(string id)
+    public Task DeleteById(string userId, string bookmarkId)
     {
-        BookmarkDto bookmark = await _repository.GetById(id).ConfigureAwait(false);
-        string userId = _context.HttpContext.User.UserId();
-        if (!bookmark.UserId.Equals(userId, StringComparison.Ordinal))
-        {
-            _logger.LogWarning("{BookmarkUserId} is different from the {UserId} in claims", bookmark.UserId, userId);
-            throw new DcException(ErrorCodes.EntityNotFound, $"Could not find bookmark with id: {id}");
-        }
+        return _repository.DeleteById(_context.HttpContext.User.UserId(), bookmarkId);
     }
 }

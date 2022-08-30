@@ -19,43 +19,48 @@ public class BookmarksController : ControllerBase
         _manager = manager;
     }
 
+    /// <summary>
+    /// Returns the user id associated with the session
+    /// </summary>
+    private string UserId => HttpContext.User.UserId();
+
     [HttpGet]
     public Task<IEnumerable<BookmarkDto>> GetUserBookmarks()
     {
-        return _manager.GetAll();
+        return _manager.GetAll(UserId);
     }
 
     [HttpGet("{bookmarkId}")]
     public Task<BookmarkDto> GetById(string bookmarkId)
     {
-        return _manager.GetById(bookmarkId);
+        return _manager.GetById(UserId, bookmarkId);
     }
 
     [HttpDelete("{bookmarkId}")]
     public Task DeleteById(string bookmarkId)
     {
-        return _manager.DeleteById(bookmarkId);
+        return _manager.DeleteById(UserId, bookmarkId);
     }
 
 
     [HttpGet("article/{articleId}")]
     public Task<BookmarkDto> GetByArticleId(string articleId)
     {
-        return _manager.GetByArticleId(articleId);
+        return _manager.GetByArticleId(UserId, articleId);
     }
 
 
     [HttpDelete("article/{articleId}")]
     public Task DeleteBookmark(string articleId)
     {
-        return _manager.Delete(articleId);
+        return _manager.Delete(UserId, articleId);
     }
 
 
     [HttpPost]
     public async Task<ActionResult> CreateBookmark(BookmarkInputDto bookmark)
     {
-        string _ = await _manager.Create(bookmark).ConfigureAwait(false);
+        string _ = await _manager.Create(UserId, bookmark).ConfigureAwait(false);
         return CreatedAtAction(nameof(GetByArticleId), new { bookmark.ArticleId }, null);
     }
 
