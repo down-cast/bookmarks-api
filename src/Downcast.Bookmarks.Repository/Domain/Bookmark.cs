@@ -8,6 +8,6 @@ internal class Bookmark
     [FirestoreDocumentId]
     public string ArticleId { get; init; } = null!;
 
-    [FirestoreDocumentCreateTimestamp]
-    public DateTime Created { get; set; }
+    [FirestoreProperty]
+    public DateTime Created { get; init; }
 }

@@ -35,7 +35,7 @@ public class BookmarksController : ControllerBase
     {
         return _manager.GetBookmarks(UserId, filter);
     }
-    
+
     /// <summary>
     /// Returns a bookmark by article id
     /// </summary>
@@ -68,8 +68,8 @@ public class BookmarksController : ControllerBase
     [HttpPost]
     public async Task<ActionResult> CreateBookmark(BookmarkInputDto bookmark)
     {
-        string _ = await _manager.Create(UserId, bookmark).ConfigureAwait(false);
-        return CreatedAtAction(nameof(GetByArticleId), new { bookmark.ArticleId }, null);
+        string id = await _manager.Create(UserId, bookmark).ConfigureAwait(false);
+        return CreatedAtAction(nameof(GetByArticleId), new { articleId = id }, null);
     }
 
 

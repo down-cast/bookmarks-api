@@ -7,6 +7,7 @@ namespace Downcast.Bookmarks.API.Config;
 public static class SwaggerConfigExtensions
 {
     private static string XmlCommentsFilePath => $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+
     public static IServiceCollection AddSwaggerConfig(this IServiceCollection services)
     {
         services.AddSwaggerGen(options =>
@@ -14,10 +15,10 @@ public static class SwaggerConfigExtensions
             options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, XmlCommentsFilePath));
             options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme
             {
-                Type         = SecuritySchemeType.Http,
-                Scheme       = "bearer",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
                 BearerFormat = "JWT",
-                Description  = "JWT Authorization header using the Bearer scheme."
+                Description = "JWT Authorization header using the Bearer scheme."
             });
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {

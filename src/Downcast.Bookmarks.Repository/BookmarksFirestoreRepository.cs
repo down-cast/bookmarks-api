@@ -31,29 +31,6 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
     }
 
     /// <summary>
-    /// Returns the sub-collection of bookmarks for the given user, ensuring that the user exists
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <exception cref="DcException">Throws if user does not exist</exception>
-    /// <returns></returns>
-    private async Task<TypedCollectionReference<Bookmark>> GetCollectionSafe(string userId)
-    {
-        DocumentSnapshot snapshot = await _firestoreDb
-            .Collection(_options.Value.UsersCollectionName)
-            .Document(userId)
-            .GetSnapshotAsync()
-            .ConfigureAwait(false);
-
-        if (snapshot.Exists)
-        {
-            return snapshot.Reference.TypedCollection<Bookmark>(_options.Value.BookmarksCollectionName);
-        }
-
-        _logger.LogWarning("User {UserId} does not exist", userId);
-        throw new DcException(ErrorCodes.EntityNotFound, "User not found");
-    }
-
-    /// <summary>
     /// Returns a sub collection of bookmarks for the given userId
     /// </summary>
     /// <param name="userId"></param>
@@ -73,11 +50,9 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
     /// <param name="userId"></param>
     /// <param name="articleId"></param>
     /// <returns></returns>
-    public async Task<string> Create(string userId, string articleId)
+    public Task<string> Create(string userId, string articleId)
     {
-        _ = await GetCollectionSafe(userId).ConfigureAwait(false);
-
-        string bookmarkId = await _firestoreDb.RunTypedTransactionAsync<string, Bookmark>(async transaction =>
+        return _firestoreDb.RunTypedTransactionAsync<Bookmark, string>(async transaction =>
         {
             TypedDocumentSnapshot<Bookmark> docSnapshot = await transaction
                 .GetSnapshotAsync(GetBookmarkDocument(userId, articleId))
@@ -90,13 +65,13 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
 
             transaction.Create(docSnapshot.Reference, new Bookmark
             {
-                ArticleId = articleId
+                ArticleId = articleId,
+                Created = DateTime.UtcNow
             });
 
             _logger.LogDebug("Created bookmark with {BookmarkId}", docSnapshot.Id);
             return docSnapshot.Id;
-        }).ConfigureAwait(false);
-        return bookmarkId;
+        });
     }
 
 
@@ -149,6 +124,7 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
     public async IAsyncEnumerable<BookmarkDto> GetBookmarks(string userId, BookmarksFilter filter)
     {
         IAsyncEnumerable<TypedDocumentSnapshot<Bookmark>> bookmarksStream = GetCollection(userId)
+            .OrderByDescending(bookmark => bookmark.Created)
             .Offset(filter.Skip)
             .Limit(filter.Top)
             .StreamAsync();
@@ -159,14 +135,11 @@ public class BookmarksFirestoreRepository : IBookmarksRepository
         }
     }
 
-    private static BookmarkDto CreateBookmarkDto(Bookmark bookmark)
+    private static BookmarkDto CreateBookmarkDto(Bookmark bookmark) => new()
     {
-        return new BookmarkDto
-        {
-            Created = bookmark.Created,
-            ArticleId = bookmark.ArticleId
-        };
-    }
+        Created = bookmark.Created,
+        ArticleId = bookmark.ArticleId
+    };
 
     /// <summary>
     /// Deletes all bookmarks for the given userId

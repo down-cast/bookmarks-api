@@ -3,8 +3,6 @@ using Downcast.Common.Errors.Handler.Config;
 using Downcast.Common.Logging;
 using Downcast.SessionManager.SDK.Authentication.Handler;
 
-using Microsoft.OpenApi.Models;
-
 using Serilog;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
