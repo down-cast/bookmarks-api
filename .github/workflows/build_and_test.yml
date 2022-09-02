@@ -12,13 +12,11 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    services: # ramp up a firestore emulator instance
-      firestore:
-        image: mtlynch/firestore-emulator:latest
-        ports:
-          - 8080:8080
+    permissions:
+      id-token: write
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v3
       - name: Setup .NET
