@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Downcast.Common.Errors.Handler" Version="0.0.7" />
+        <PackageReference Include="Downcast.Common.Errors.Handler" Version="0.0.8" />
         <PackageReference Include="Downcast.Common.Logging" Version="0.0.8" />
         <PackageReference Include="Downcast.SessionManager.SDK.Authentication.Extensions" Version="0.0.5" />
         <PackageReference Include="Downcast.SessionManager.SDK.Authentication.Handler" Version="0.0.4" />
